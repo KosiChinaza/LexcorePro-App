@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("staff") // admin | staff
+  position  String?
+  phone     String?
+  status    String   @default("active") // active | inactive | pending
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeEntries   TimeEntry[]
+  documents     Document[]
+  leaveRequests LeaveRequest[]
+  auditLogs     AuditLog[]
+  sessions      Session[]
+  matterTeam    MatterTeam[]
+  researchTasks ResearchTask[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  type      String   @default("individual") // individual | corporate
+  status    String   @default("active")
+  kycStatus String   @default("pending") // pending | verified | rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  matters     Matter[]
+  kycDocuments KycDocument[]
+
+  @@map("clients")
+}
+
+model Matter {
+  id          String    @id @default(cuid())
+  matterNo    String    @unique
+  title       String
+  type        String    // LIT | CORP | PROP | EMP | TAX | FAM | CRIM
+  status      String    @default("active") // active | closed | urgent | on_hold
+  priority    String    @default("normal") // low | normal | high | urgent
+  clientId    String
+  description String?
+  openDate    DateTime  @default(now())
+  closeDate   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  client      Client        @relation(fields: [clientId], references: [id])
+  timeEntries TimeEntry[]
+  invoices    Invoice[]
+  documents   Document[]
+  deadlines   Deadline[]
+  courtDates  CourtDate[]
+  updates     MatterUpdate[]
+  team        MatterTeam[]
+  research    ResearchTask[]
+
+  @@map("matters")
+}
+
+model MatterTeam {
+  id       String @id @default(cuid())
+  matterId String
+  userId   String
+  role     String @default("member") // lead | member | support
+
+  matter Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matterId, userId])
+  @@map("matter_team")
+}
+
+model MatterUpdate {
+  id        String   @id @default(cuid())
+  matterId  String
+  content   String
+  author    String
+  createdAt DateTime @default(now())
+
+  matter Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@map("matter_updates")
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  matterId    String
+  userId      String
+  description String
+  hours       Float
+  rate        Float    @default(50000) // hourly rate in Naira
+  date        DateTime @default(now())
+  billed      Boolean  @default(false)
+  invoiceId   String?
+  createdAt   DateTime @default(now())
+
+  matter  Matter  @relation(fields: [matterId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("time_entries")
+}
+
+model Invoice {
+  id          String    @id @default(cuid())
+  invoiceNo   String    @unique
+  matterId    String
+  amount      Float
+  vatRate     Float     @default(0.075) // 7.5% VAT
+  vat         Float     @default(0)
+  total       Float
+  status      String    @default("draft") // draft | sent | paid | overdue | cancelled
+  dueDate     DateTime?
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  matter Matter @relation(fields: [matterId], references: [id])
+
+  @@map("invoices")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  matterId     String?
+  uploadedBy   String
+  name         String
+  originalName String
+  mimetype     String
+  size         Int
+  path         String
+  category     String?  // contract | court_filing | correspondence | evidence | other
+  createdAt    DateTime @default(now())
+
+  matter   Matter? @relation(fields: [matterId], references: [id])
+  uploader User    @relation(fields: [uploadedBy], references: [id])
+
+  @@map("documents")
+}
+
+model KycDocument {
+  id          String   @id @default(cuid())
+  clientId    String
+  name        String
+  type        String   // id | address | incorporation | other
+  path        String
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_documents")
+}
+
+model Deadline {
+  id          String   @id @default(cuid())
+  matterId    String
+  title       String
+  description String?
+  dueDate     DateTime
+  priority    String   @default("normal")
+  status      String   @default("pending") // pending | completed | overdue
+  createdAt   DateTime @default(now())
+
+  matter Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@map("deadlines")
+}
+
+model CourtDate {
+  id        String   @id @default(cuid())
+  matterId  String
+  title     String
+  court     String?
+  judge     String?
+  dateTime  DateTime
+  notes     String?
+  status    String   @default("scheduled") // scheduled | adjourned | concluded | cancelled
+  createdAt DateTime @default(now())
+
+  matter Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@map("court_dates")
+}
+
+model LeaveRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   // annual | sick | maternity | paternity | casual | study
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     String   @default("pending") // pending | approved | rejected
+  reviewedBy String?
+  reviewNote String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("leave_requests")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  details   String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model PendingRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  position  String?
+  status    String   @default("pending") // pending | approved | rejected
+  createdAt DateTime @default(now())
+
+  @@map("pending_requests")
+}
+
+model ValidationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("validation_codes")
+}
+
+model FirmSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("firm_settings")
+}
+
+model ResearchTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  assignedTo  String?
+  matterId    String?
+  status      String   @default("pending") // pending | in_progress | completed
+  priority    String   @default("normal")
+  dueDate     DateTime?
+  result      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignee User?   @relation(fields: [assignedTo], references: [id])
+  matter   Matter? @relation(fields: [matterId], references: [id])
+
+  @@map("research_tasks")
+}
