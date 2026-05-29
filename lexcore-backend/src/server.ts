@@ -21,6 +21,7 @@ import { settingsRouter } from './routes/settings';
 import { auditRouter } from './routes/audit';
 import { reportsRouter } from './routes/reports';
 import { researchRouter } from './routes/research';
+import { startCronJobs } from './services/cronService';
 
 // ─── Ensure uploads directory exists ──────────────────────────────────────
 const uploadsDir = path.join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
@@ -30,8 +31,6 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────
-// origin: true reflects the request Origin back — works for all origins in dev.
-// In production set FRONTEND_URL and restrict if desired.
 app.use(cors({
   origin: true,
   credentials: true,
@@ -88,7 +87,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 // ─── Start Server ─────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log('\n🏛️  LexCore Pro — Peters & Associates');
+  console.log('\n🏛️  LexCore Pro — Asalaw LP');
   console.log(`📡 API:     http://localhost:${PORT}/api`);
   console.log(`🔍 Health:  http://localhost:${PORT}/health`);
 
@@ -98,6 +97,11 @@ app.listen(PORT, () => {
   } else {
     console.log(`🗄️  DB:     ${process.env.DATABASE_URL.replace(/\/\/.*@/, '//***@')}`);
     console.log('\nFirst time? Run: npm run db:push && npm run db:seed\n');
+  }
+
+  // ─── Start cron jobs (only in production to avoid noise in dev) ───────
+  if (process.env.NODE_ENV === 'production') {
+    startCronJobs();
   }
 });
 
