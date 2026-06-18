@@ -109,16 +109,16 @@ const LoginPage: React.FC = () => {
         </div>
 
         {/* Demo hint */}
-        <div className="mt-4 bg-slate-800/60 border border-slate-700 rounded-xl px-5 py-4">
+
           <p className="text-xs text-slate-500 font-medium mb-2">Demo credentials</p>
           <div className="space-y-1 text-xs text-slate-400 font-mono">
             <div>Admin: admin@lexcore.com / admin123</div>
             <div>Staff: chidi@lexcore.com / password123</div>
           </div>
-        </div>
       </div>
     </div>
   );
 };
 
 export default LoginPage;
+

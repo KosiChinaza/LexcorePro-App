@@ -77,7 +77,7 @@ const Sidebar: React.FC<{ collapsed: boolean; onToggle: () => void }> = ({ colla
         {!collapsed && (
           <div className="min-w-0">
             <div className="font-bold text-slate-100 text-sm leading-tight">LexCore Pro</div>
-            <div className="text-xs text-slate-500 truncate">Peters & Associates</div>
+            <div className="text-xs text-slate-500 truncate">ASALAW LP</div>
           </div>
         )}
         <button
