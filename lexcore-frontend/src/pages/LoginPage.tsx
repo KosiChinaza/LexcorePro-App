@@ -37,7 +37,6 @@ const LoginPage: React.FC = () => {
       </div>
 
       <div className="w-full max-w-md relative">
-        {/* Card */}
         <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-8 pt-8 pb-6 border-b border-slate-700 text-center">
@@ -64,7 +63,7 @@ const LoginPage: React.FC = () => {
                 <input
                   type="email"
                   className="input"
-                  placeholder="you@lexcore.com"
+                  placeholder="you@asalawpractice.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -113,4 +112,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
